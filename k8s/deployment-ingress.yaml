@@ -1,0 +1,104 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: store
+---
+apiVersion: secrets-store.csi.x-k8s.io/v1
+kind: SecretProviderClass
+metadata:
+  name: azure-kvname-user-msi
+  namespace: store
+spec:
+  provider: azure
+  parameters:
+    userAssignedIdentityID: client-id
+    keyvaultName: key-vault-name
+    tenantId: tenant-id
+    usePodIdentity: "false"
+    useVMManagedIdentity: "true"          
+    objects:  |
+      array:
+        - |
+          objectName: secret1
+          objectType: secret              
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: store-front
+  namespace: store
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: store-front
+  template:
+    metadata:
+      labels:
+        app: store-front
+    spec:
+      nodeSelector:
+        "kubernetes.io/os": linux
+      containers:
+      - name: store-front
+        image: azurecr.io/store-front:v1.0.0
+        ports:
+        - containerPort: 8080
+          name: store-front
+        env: 
+        - name: VUE_APP_ORDER_SERVICE_URL
+          value: "http://api.aks-public-ip-gw-tv4ljfdfxh6h4.azure.sombrerita.com/orders"
+        - name: VUE_APP_PRODUCT_SERVICE_URL
+          value: "http://api.aks-public-ip-gw-tv4ljfdfxh6h4.azure.sombrerita.com/products"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: secrets-store01-inline
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
+      volumes:
+      - name: secrets-store01-inline
+        csi:
+          driver: secrets-store.csi.k8s.io
+          readOnly: true
+          volumeAttributes:
+            secretProviderClass: "azure-kvname-user-msi"
+---
+apiVersion: approuting.kubernetes.azure.com/v1alpha1
+kind: NginxIngressController
+metadata:
+  name: store-nginx
+  namespace: store
+spec:
+  ingressClassName: store-nginx
+  controllerNamePrefix: store-nginx
+  loadBalancerAnnotations: 
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: store-ingress
+  namespace: store
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: store-nginx
+  rules:
+  - host: customer1.private.metris.com
+    http:
+      paths:
+      - path: /store(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: store-front-service
+            port:
+              number: 80
+      
