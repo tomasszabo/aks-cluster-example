@@ -9,7 +9,7 @@ param storageAccountName string
 param adminPassword string
 
 param adminUsername string = 'infAdmin'
-param OSVersion string = 'ubuntu-24_04-lts'
+param osVersion string = '22_04-lts-gen2'
 param vmSize string = 'Standard_B2as_v2'
 param vmName string = 'influx'
 param influxServerName string = '${prefix}-${vmName}-${uniqueString(resourceGroup().id)}'
@@ -70,7 +70,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
       imageReference: {
         publisher: 'MicrosoftWindowsServer'
         offer: 'WindowsServer'
-        sku: OSVersion
+        sku: osVersion
         version: 'latest'
       }
       osDisk: {
