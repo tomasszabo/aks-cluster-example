@@ -57,18 +57,18 @@ module kubernetes 'kubernetes.bicep' = {
   }
 }
 
-module sqlServer 'sqlserver.bicep' = {
-  name: 'sqlServer'
-  params: {
-    location: location
-    prefix: prefix
-  }
-}
+// module sqlServer 'sqlserver.bicep' = {
+//   name: 'sqlServer'
+//   params: {
+//     location: location
+//     prefix: prefix
+//   }
+// }
 
-module influxDb 'influxdb.bicep' = {
-  name: 'influxDb'
-  params: {
-    location: location
-    prefix: prefix
-  }
-}
+// module influxDb 'influxdb.bicep' = {
+//   name: 'influxDb'
+//   params: {
+//     location: location
+//     prefix: prefix
+//   }
+// }
