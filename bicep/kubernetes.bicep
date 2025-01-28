@@ -29,7 +29,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-09-02-previ
     dnsPrefix: dnsPrefix
     agentPoolProfiles: [
       {
-        name: 'customer1pool'
+        name: 'c1pool'
         count: agentCount
         vmSize: agentVMSize
         osType: 'Linux'
