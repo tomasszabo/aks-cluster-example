@@ -9,7 +9,7 @@ param storageAccountName string
 param adminPassword string
 
 param adminUsername string = 'infAdmin'
-param osVersion string = 'ubuntu-24_04-lts'
+param osVersion string = 'server'
 param vmSize string = 'Standard_B2as_v2'
 param vmName string = 'influx'
 param influxServerName string = '${prefix}-${vmName}-${uniqueString(resourceGroup().id)}'
