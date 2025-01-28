@@ -9,7 +9,7 @@ param storageAccountName string
 param adminPassword string
 
 param adminUsername string = 'sqlAdmin'
-param OSVersion string = '2022-datacenter-azure-edition'
+param osVersion string = '2022-datacenter-azure-edition'
 param vmSize string = 'Standard_B2as_v2'
 param vmName string = 'mssql'
 param sqlServerName string = '${prefix}-${vmName}-${uniqueString(resourceGroup().id)}'
@@ -70,7 +70,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
       imageReference: {
         publisher: 'MicrosoftWindowsServer'
         offer: 'WindowsServer'
-        sku: OSVersion
+        sku: osVersion
         version: 'latest'
       }
       osDisk: {
