@@ -1,5 +1,5 @@
 @description('The location of the Managed Cluster resource.')
-param location string = 'swedencentral'
+param location string = 'westeurope'
 
 @description('The prefix of the Managed Cluster resource.')
 param prefix string = 'aks'
