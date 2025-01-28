@@ -1,12 +1,16 @@
 
 param location string
 param prefix string
-
+param keyVaultName string
 param publicIpAddressId string
 param subnetAppGatewayId string
 
 param appGatewayName string = '${prefix}-app-gw-${uniqueString(resourceGroup().id)}'
 param appGatewayIdentityId string = '${prefix}-app-gw-identity-${uniqueString(resourceGroup().id)}'
+
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
+  name: keyVaultName
+}
 
 resource appGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: appGatewayIdentityId
@@ -64,12 +68,6 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-02-01' = {
       }
     ]
     frontendPorts: [
-      {
-        name: 'port_80'
-        properties: {
-          port: 80
-        }
-      }
       {
         name: 'port_443'
         properties: {
@@ -129,6 +127,15 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-02-01' = {
         }
       }
     ]
+    sslCertificates: [
+      {
+        name: 'defaultSslCert'
+        properties: {
+          data: loadFileAsBase64('./certificate.pfx')
+          password: 'appGWSSL'
+        }
+      }
+    ]
     httpListeners: [
       {
         name: 'customer1listener'
@@ -137,11 +144,14 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-02-01' = {
             id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIp')
           }
           frontendPort: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_80')
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_443')
           }
-          protocol: 'Http'
+          protocol: 'Https'
           hostName: 'hackathon1.gad.andritz.com'
           requireServerNameIndication: false
+          sslCertificate: {
+            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, 'defaultSslCert')
+          }
         }
       }
       {
@@ -151,11 +161,14 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-02-01' = {
             id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIp')
           }
           frontendPort: {
-            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_80')
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_443')
           }
-          protocol: 'Http'
+          protocol: 'Https'
           hostName: 'hackathon2.gad.andritz.com'
           requireServerNameIndication: false
+          sslCertificate: {
+            id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, 'defaultSslCert')
+          }
         }
       }
     ]
@@ -244,6 +257,17 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-02-01' = {
       minCapacity: 2
       maxCapacity: 3
     }
+  }
+}
+
+var keyVaultCertificatesUserRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'db79e9a7-68ee-4b58-9aeb-b90e7c24fcba')
+
+resource keyVaultRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(keyVault.id, appGateway.id, keyVaultCertificatesUserRoleDefinitionId)
+  scope: keyVault
+  properties: {
+    roleDefinitionId: keyVaultCertificatesUserRoleDefinitionId
+    principalId: appGatewayIdentity.properties.principalId
   }
 }
 

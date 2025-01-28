@@ -1,7 +1,7 @@
 
 param location string
 param prefix string
-param kubernetesSubnetId string
+param aksCustomer1SubnetId string
 param registryName string
 param keyVaultName string
 param privateDnsZoneId string
@@ -29,13 +29,13 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-09-02-previ
     dnsPrefix: dnsPrefix
     agentPoolProfiles: [
       {
-        name: 'agentpool'
+        name: 'customer1pool'
         count: agentCount
         vmSize: agentVMSize
         osType: 'Linux'
         mode: 'System'
         osDiskType: 'Ephemeral'
-        vnetSubnetID: kubernetesSubnetId
+        vnetSubnetID: aksCustomer1SubnetId
       }
     ]
     kubernetesVersion: kubernetesVersion

@@ -1,58 +1,21 @@
 param prefix string
 param location string
+param publicIpId string
+param subnetId string
+param storageAccountName string
 
-@description('Username for the Virtual Machine.')
-param adminUsername string
-
-@description('Password for the Virtual Machine.')
 @minLength(12)
 @secure()
 param adminPassword string
 
-@description('Unique DNS Name for the Public IP used to access the Virtual Machine.')
-param dnsLabelPrefix string = toLower('${prefix}-mssql-${uniqueString(resourceGroup().id)}')
-
-@description('Name for the Public IP used to access the Virtual Machine.')
-param publicIpName string = '${prefix}-public-ip-mssql-${uniqueString(resourceGroup().id)}'
-
-@description('Allocation method for the Public IP used to access the Virtual Machine.')
-@allowed([
-  'Dynamic'
-  'Static'
-])
-param publicIPAllocationMethod string = 'Static'
-
-@description('SKU for the Public IP used to access the Virtual Machine.')
-@allowed([
-  'Basic'
-  'Standard'
-])
-param publicIpSku string = 'Standard'
-
-@description('The Windows version for the VM. This will pick a fully patched image of this given Windows version.')
-
+param adminUsername string = 'sqlAdmin'
 param OSVersion string = '2022-datacenter-azure-edition'
-
-@description('Size of the virtual machine.')
 param vmSize string = 'Standard_B2as_v2'
-
-@description('Name of the virtual machine.')
 param vmName string = 'mssql'
-
-@description('Security Type of the Virtual Machine.')
-@allowed([
-  'Standard'
-  'TrustedLaunch'
-])
+param sqlServerName string = '${prefix}-${vmName}-${uniqueString(resourceGroup().id)}'
 param securityType string = 'TrustedLaunch'
 
-var storageAccountName = 'bootdiags${uniqueString(resourceGroup().id)}'
-var nicName = 'myVMNic'
-var addressPrefix = '10.0.0.0/16'
-var subnetName = 'Subnet'
-var subnetPrefix = '10.0.0.0/24'
-var virtualNetworkName = 'MyVNET'
-var networkSecurityGroupName = 'default-NSG'
+var nicName = '${prefix}-${vmName}-nic-${uniqueString(resourceGroup().id)}'
 var securityProfileJson = {
   uefiSettings: {
     secureBootEnabled: true
@@ -66,74 +29,6 @@ var extensionVersion = '1.0'
 var maaTenantName = 'GuestAttestation'
 var maaEndpoint = substring('emptyString', 0, 0)
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2022-05-01' = {
-  name: storageAccountName
-  location: location
-  sku: {
-    name: 'Standard_LRS'
-  }
-  kind: 'Storage'
-}
-
-resource publicIp 'Microsoft.Network/publicIPAddresses@2022-05-01' = {
-  name: publicIpName
-  location: location
-  sku: {
-    name: publicIpSku
-  }
-  properties: {
-    publicIPAllocationMethod: publicIPAllocationMethod
-    dnsSettings: {
-      domainNameLabel: dnsLabelPrefix
-    }
-  }
-}
-
-resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-05-01' = {
-  name: networkSecurityGroupName
-  location: location
-  properties: {
-    securityRules: [
-      {
-        name: 'default-allow-3389'
-        properties: {
-          priority: 1000
-          access: 'Allow'
-          direction: 'Inbound'
-          destinationPortRange: '3389'
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          sourceAddressPrefix: '*'
-          destinationAddressPrefix: '*'
-        }
-      }
-    ]
-  }
-}
-
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2022-05-01' = {
-  name: virtualNetworkName
-  location: location
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        addressPrefix
-      ]
-    }
-    subnets: [
-      {
-        name: subnetName
-        properties: {
-          addressPrefix: subnetPrefix
-          networkSecurityGroup: {
-            id: networkSecurityGroup.id
-          }
-        }
-      }
-    ]
-  }
-}
-
 resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
   name: nicName
   location: location
@@ -144,23 +39,23 @@ resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
         properties: {
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress: {
-            id: publicIp.id
+            id: publicIpId
           }
           subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', virtualNetworkName, subnetName)
+            id: subnetId
           }
         }
       }
     ]
   }
-  dependsOn: [
+}
 
-    virtualNetwork
-  ]
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
+  name: storageAccountName
 }
 
 resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
-  name: vmName
+  name: sqlServerName
   location: location
   properties: {
     hardwareProfile: {
@@ -230,4 +125,3 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' =
   }
 }
 
-output hostname string = publicIp.properties.dnsSettings.fqdn

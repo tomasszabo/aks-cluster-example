@@ -4,6 +4,17 @@ param location string = resourceGroup().location
 @description('The prefix of the Managed Cluster resource.')
 param prefix string = 'aks'
 
+@secure()
+param sqlAdminPassword string
+
+module storage 'storage.bicep' = {
+  name: 'storage'
+  params: {
+    location: location
+    prefix: prefix
+  }
+}
+
 module network 'network.bicep' = {
   name: 'network'
   params: {
@@ -34,6 +45,7 @@ module appGateway 'gateway.bicep' = {
     prefix: prefix
     publicIpAddressId: network.outputs.gatewayIpAddressId
     subnetAppGatewayId: network.outputs.subnetAppGatewayId
+    keyVaultName: keyVault.outputs.keyVaultName
   }
 }
 
@@ -50,25 +62,101 @@ module kubernetes 'kubernetes.bicep' = {
   params: {
     location: location
     prefix: prefix
-    kubernetesSubnetId: network.outputs.subnetAksId
+    aksCustomer1SubnetId: network.outputs.subnetAksCustomer1Id 
     registryName: registry.outputs.registryName
     keyVaultName: keyVault.outputs.keyVaultName
     privateDnsZoneId: dnsZone.outputs.privateDnsZoneId
   }
 }
 
-// module sqlServer 'sqlserver.bicep' = {
-//   name: 'sqlServer'
-//   params: {
-//     location: location
-//     prefix: prefix
-//   }
-// }
+module sqlServer 'sqlserver.bicep' = {
+  name: 'sqlServer'
+  params: {
+    location: location
+    prefix: prefix
+    adminPassword: sqlAdminPassword
+    publicIpId: network.outputs.mssqlIpAddressId
+    subnetId: network.outputs.subsnetVMId
+    storageAccountName: storage.outputs.storageAccountName
+  }
+}
 
 // module influxDb 'influxdb.bicep' = {
 //   name: 'influxDb'
 //   params: {
 //     location: location
 //     prefix: prefix
+//   }
+// }
+
+// module privateEndpointsModule 'private-endpoints.bicep' = {
+//   name: 'privateEndpointsModule'
+//   params: {
+//     location: location
+//     prefix: prefix
+//     vnetId: network.outputs.vnetId
+//     subnetPrivateEndpointsId: network.outputs.subnetPrivateEndpointsId
+//     endpoints: [
+//       {
+//         name: 'storage-blob'
+//         dnsZoneName: 'privatelink.blob.${environment().suffixes.storage}'
+//         groupIds: ['blob']
+//         serviceId: storage.outputs.storageAccountId
+//       }
+//       {
+//         name: 'storage-file'
+//         dnsZoneName: 'privatelink.file.${environment().suffixes.storage}'
+//         groupIds: ['file']
+//         serviceId: storage.outputs.storageAccountId
+//       }
+//       {
+//         name: 'storage-queue'
+//         dnsZoneName: 'privatelink.queue.${environment().suffixes.storage}'
+//         groupIds: ['queue']
+//         serviceId: storage.outputs.storageAccountId
+//       }
+//       {
+//         name: 'storage-table'
+//         dnsZoneName: 'privatelink.table.${environment().suffixes.storage}'
+//         groupIds: ['table']
+//         serviceId: storage.outputs.storageAccountId
+//       }
+//       {
+//         name: 'storage-blob'
+//         dnsZoneName: 'privatelink.blob.${environment().suffixes.storage}'
+//         groupIds: ['blob']
+//         serviceId: storage.outputs.storageAccountCustomer1Id
+//       }
+//       {
+//         name: 'storage-file'
+//         dnsZoneName: 'privatelink.file.${environment().suffixes.storage}'
+//         groupIds: ['file']
+//         serviceId: storage.outputs.storageAccountCustomer1Id
+//       }
+//       {
+//         name: 'storage-queue'
+//         dnsZoneName: 'privatelink.queue.${environment().suffixes.storage}'
+//         groupIds: ['queue']
+//         serviceId: storage.outputs.storageAccountCustomer1Id
+//       }
+//       {
+//         name: 'storage-table'
+//         dnsZoneName: 'privatelink.table.${environment().suffixes.storage}'
+//         groupIds: ['table']
+//         serviceId: storage.outputs.storageAccountCustomer1Id
+//       }
+//       {
+//         name: 'keyVault'
+//         dnsZoneName: 'privatelink.vaultcore.azure.net'
+//         groupIds: ['vault']
+//         serviceId: keyVault.outputs.keyVaultId
+//       }
+//       {
+//         name: 'keyVault'
+//         dnsZoneName: 'privatelink.vaultcore.azure.net'
+//         groupIds: ['acr']
+//         serviceId: registry.outputs.registryId
+//       }
+//     ]
 //   }
 // }

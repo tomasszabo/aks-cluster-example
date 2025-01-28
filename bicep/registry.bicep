@@ -18,3 +18,4 @@ resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
 }
 
 output registryName string = registryName
+output registryId string = registry.id

@@ -2,7 +2,7 @@
 param vnetId string
 
 resource gatewayDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
-  name: 'customer1.metris.com'
+  name: 'private.metris.com'
   location: 'global'
   properties: {}
 }
