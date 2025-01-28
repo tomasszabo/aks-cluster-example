@@ -4,6 +4,7 @@ param prefix string
 param kubernetesSubnetId string
 param registryName string
 param keyVaultName string
+param privateDnsZoneId string
 
 param clusterName string = '${prefix}-aks-${uniqueString(resourceGroup().id)}'
 param dnsPrefix string = prefix
@@ -43,6 +44,9 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-09-02-previ
       // Application routing add-on
       httpApplicationRouting: {
         enabled: true
+        config: {
+          zones: privateDnsZoneId
+        }
       }
 
       // Azure Key Vault add-on

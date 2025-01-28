@@ -3,7 +3,6 @@ param location string
 param prefix string
 
 param gatewayIpAddressName string = '${prefix}-public-ip-gw-${uniqueString(resourceGroup().id)}'
-param kubernetesIpAddressName string = '${prefix}-public-ip-aks-${uniqueString(resourceGroup().id)}'
 param vnetName string = '${prefix}-vnet-${uniqueString(resourceGroup().id)}'
 param vnetAddressPrefix string = '10.0.0.0/16'
 param subnetAppGatewayName string = 'app-gw'
@@ -13,23 +12,6 @@ param subnetPrivateEndpointsPrefix string = '10.0.3.0/24'
 param subnetAksName string = 'aks'
 param subnetAksPrefix string = '10.0.4.0/24'
 param nsgAppGatewayName string = '${prefix}-nsg-app-gw-${uniqueString(resourceGroup().id)}'
-param childDnsZoneName string = gatewayIpAddressName
-// param dnsZoneName string = '${childDnsZoneName}.${parentDnsZoneName}'
-
-// resource kubernetesIpAddress 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
-//   name: kubernetesIpAddressName
-//   location: location
-//   sku: {
-//     name: 'Standard'
-//   }
-//   properties: {
-//     publicIPAddressVersion: 'IPv4'
-//     publicIPAllocationMethod: 'Static'
-//     dnsSettings: {
-//       domainNameLabel: kubernetesIpAddressName    
-//     }
-//   }
-// }
 
 resource gatewayIpAddress 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
   name: gatewayIpAddressName

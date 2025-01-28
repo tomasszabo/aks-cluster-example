@@ -1,5 +1,5 @@
 @description('The location of the Managed Cluster resource.')
-param location string = 'swedencentral'
+param location string = resourceGroup().location
 
 @description('The prefix of the Managed Cluster resource.')
 param prefix string = 'aks'
@@ -27,18 +27,15 @@ module keyVault 'keyVault.bicep' = {
   }
 }
 
-// module appGateway 'gateway.bicep' = {
-//   name: 'gateway'
-//   params: {
-//     location: location
-//     prefix: prefix
-//     publicIpAddressId: network.outputs.gatewayIpAddressId
-//     subnetAppGatewayId: network.outputs.subnetAppGatewayId
-//     cnames: network.outputs.cnames
-//     paths: paths
-//     kubernetesIpAddress: network.outputs.kubernetesIpAddress
-//   }
-// }
+module appGateway 'gateway.bicep' = {
+  name: 'gateway'
+  params: {
+    location: location
+    prefix: prefix
+    publicIpAddressId: network.outputs.gatewayIpAddressId
+    subnetAppGatewayId: network.outputs.subnetAppGatewayId
+  }
+}
 
 module registry 'registry.bicep' = {
   name: 'registry'
@@ -56,6 +53,7 @@ module kubernetes 'kubernetes.bicep' = {
     kubernetesSubnetId: network.outputs.subnetAksId
     registryName: registry.outputs.registryName
     keyVaultName: keyVault.outputs.keyVaultName
+    privateDnsZoneId: dnsZone.outputs.privateDnsZoneId
   }
 }
 

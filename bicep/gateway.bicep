@@ -4,26 +4,23 @@ param prefix string
 
 param publicIpAddressId string
 param subnetAppGatewayId string
-param cnames array
-param paths array
-param kubernetesIpAddress string
 
-// param primaryBackendEndFQDN string
-
-// param probeUrl string = '/status-0123456789abcdef'
 param appGatewayName string = '${prefix}-app-gw-${uniqueString(resourceGroup().id)}'
-// param appGatewayIdentityId string = '${prefix}-app-gw-identity-${uniqueString(resourceGroup().id)}'
+param appGatewayIdentityId string = '${prefix}-app-gw-identity-${uniqueString(resourceGroup().id)}'
 
-// resource appGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-//   name: appGatewayIdentityId
-//   location: location
-// }
+resource appGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
+  name: appGatewayIdentityId
+  location: location
+}
 
 resource appGateway 'Microsoft.Network/applicationGateways@2023-02-01' = {
   name: appGatewayName
   location: location
   identity: {
-    type: 'SystemAssigned'
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${appGatewayIdentity.id}': {}
+    }
   }
   properties: {
     sku: {
@@ -82,7 +79,7 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-02-01' = {
     ]
     backendAddressPools: [
       {
-        name: 'defaultaddresspool'
+        name: 'customer1pool'
         properties: {
           backendAddresses: [
             {
@@ -91,40 +88,50 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-02-01' = {
           ]
         }
       }
+      {
+        name: 'customer2pool'
+        properties: {
+          backendAddresses: [
+            {
+              fqdn: 'customer2.private.metris.com'
+            }
+          ]
+        }
+      }
     ]
     backendHttpSettingsCollection: [
       {
-        name: 'defaulthttpsetting'
+        name: 'customer1setting'
         properties: {
           port: 80
           protocol: 'Http'
           cookieBasedAffinity: 'Disabled'
-          pickHostNameFromBackendAddress: false
+          pickHostNameFromBackendAddress: true
           affinityCookieName: 'ApplicationGatewayAffinity'
           requestTimeout: 20
           probe: {
-            id: resourceId('Microsoft.Network/applicationGateways/probes', appGatewayName, 'defaultProbe')
+            id: resourceId('Microsoft.Network/applicationGateways/probes', appGatewayName, 'customer1probe')
           }
         }
       }
-      // {
-      //   name: 'https'
-      //   properties: {
-      //     port: 443
-      //     protocol: 'Https'
-      //     cookieBasedAffinity: 'Disabled'
-      //     hostName: primaryBackendEndFQDN
-      //     pickHostNameFromBackendAddress: false
-      //     requestTimeout: 20
-      //     probe: {
-      //       id: resourceId('Microsoft.Network/applicationGateways/probes', appGatewayName, 'APIM')
-      //     }
-      //   }
-      // }
+      {
+        name: 'customer2setting'
+        properties: {
+          port: 80
+          protocol: 'Http'
+          cookieBasedAffinity: 'Disabled'
+          pickHostNameFromBackendAddress: true
+          affinityCookieName: 'ApplicationGatewayAffinity'
+          requestTimeout: 20
+          probe: {
+            id: resourceId('Microsoft.Network/applicationGateways/probes', appGatewayName, 'customer2probe')
+          }
+        }
+      }
     ]
     httpListeners: [
       {
-        name: 'default'
+        name: 'customer1listener'
         properties: {
           frontendIPConfiguration: {
             id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIp')
@@ -133,55 +140,66 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-02-01' = {
             id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_80')
           }
           protocol: 'Http'
+          hostName: 'hackathon1.gad.andritz.com'
           requireServerNameIndication: false
         }
       }
-      // {
-      //   name: 'https'
-      //   properties: {
-      //     frontendIPConfiguration: {
-      //       id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIp')
-      //     }
-      //     frontendPort: {
-      //       id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_443')
-      //     }
-      //     protocol: 'Https'
-      //     sslCertificate: {
-      //       id: resourceId('Microsoft.Network/applicationGateways/sslCertificates', appGatewayName, appGatewayFQDN)
-      //     }
-      //     hostNames: []
-      //     requireServerNameIndication: false
-      //   }
-      // }
+      {
+        name: 'customer2listener'
+        properties: {
+          frontendIPConfiguration: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', appGatewayName, 'appGwPublicFrontendIp')
+          }
+          frontendPort: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', appGatewayName, 'port_80')
+          }
+          protocol: 'Http'
+          hostName: 'hackathon2.gad.andritz.com'
+          requireServerNameIndication: false
+        }
+      }
     ]
     urlPathMaps: []
     requestRoutingRules: [
       {
-        name: 'DefaultRuleName'
+        name: 'customer1rule'
         properties: {
           ruleType: 'Basic'
           priority: 1
           httpListener: {
-            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName,'default')
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName,'customer1listener')
           }
           backendAddressPool: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, 'defaultaddresspool')
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, 'customer1pool')
           }
           backendHttpSettings: {
-            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, 'defaulthttpsetting')
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, 'customer1setting')
           }
-          rewriteRuleSet: {
-            id: resourceId('Microsoft.Network/applicationGateways/rewriteRuleSets', appGatewayName, 'rewriteRuleSet')
+        }
+      }
+      {
+        name: 'customer2rule'
+        properties: {
+          ruleType: 'Basic'
+          priority: 2
+          httpListener: {
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', appGatewayName,'customer2listener')
+          }
+          backendAddressPool: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', appGatewayName, 'customer2pool')
+          }
+          backendHttpSettings: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', appGatewayName, 'customer2setting')
           }
         }
       }
     ]
     probes: [
       {
-        name: 'defaultProbe'
+        name: 'customer1probe'
         properties: {
           protocol: 'Http'
-          path: '/store/health'
+          path: '/health'
           interval: 30
           timeout: 30
           unhealthyThreshold: 3
@@ -193,28 +211,20 @@ resource appGateway 'Microsoft.Network/applicationGateways@2023-02-01' = {
           }
         }
       }
-    ]
-    rewriteRuleSets: [
       {
-        name: 'rewriteRuleSet'
+        name: 'customer2probe'
         properties: {
-          rewriteRules: [for (path, i) in paths: {
-              name: path
-              conditions: [
-                {
-                  ignoreCase: true
-                  pattern: cnames[i]
-                  negate: false
-                  variable: 'http_req_Host'
-                }
-              ]
-              actionSet: {
-                urlConfiguration: { 
-                  modifiedPath: '/${path}/{var_uri_path}'
-                  reroute: false
-                }
-            }
-          }]
+          protocol: 'Http'
+          path: '/health'
+          interval: 30
+          timeout: 30
+          unhealthyThreshold: 3
+          pickHostNameFromBackendHttpSettings: true
+          match: {
+            statusCodes: [
+              '200-399'
+            ]
+          }
         }
       }
     ]

@@ -18,3 +18,5 @@ resource gatewayVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@
     }
   }
 }
+
+output privateDnsZoneId string = gatewayDnsZone.id
