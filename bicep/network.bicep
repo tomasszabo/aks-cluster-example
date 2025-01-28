@@ -11,6 +11,8 @@ param subnetPrivateEndpointsName string = 'private-endpoints'
 param subnetPrivateEndpointsPrefix string = '10.0.3.0/24'
 param subnetAksName string = 'aks'
 param subnetAksPrefix string = '10.0.4.0/24'
+param subnetVmsName string = 'virtual-machines'
+param subnetVmsPrefix string = '10.0.2.0/24'
 param nsgAppGatewayName string = '${prefix}-nsg-app-gw-${uniqueString(resourceGroup().id)}'
 
 resource gatewayIpAddress 'Microsoft.Network/publicIPAddresses@2023-02-01' = {
@@ -131,6 +133,12 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-02-01' = {
         name: subnetPrivateEndpointsName
         properties: {
           addressPrefix: subnetPrivateEndpointsPrefix
+        }
+      }
+      {
+        name: subnetVmsName
+        properties: {
+          addressPrefix: subnetVmsPrefix
         }
       }
     ]
