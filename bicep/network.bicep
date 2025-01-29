@@ -15,6 +15,7 @@ param subnetAksName string = 'aks'
 param subnetAksPrefix string = '10.0.4.0/24'
 param nsgAppGatewayName string = '${prefix}-nsg-app-gw-${uniqueString(resourceGroup().id)}'
 param nsgVMName string = '${prefix}-nsg-vm-${uniqueString(resourceGroup().id)}'
+param nsgAksName string = '${prefix}-nsg-aks-${uniqueString(resourceGroup().id)}'
 param mssqlIpAddressName string = '${prefix}-public-ip-mssql-${uniqueString(resourceGroup().id)}'
 param influxIpAddressName string = '${prefix}-public-ip-influx-${uniqueString(resourceGroup().id)}'
 
@@ -147,6 +148,28 @@ resource vmSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-05-01' = 
           sourcePortRange: '*'
           sourceAddressPrefix: '*'
           destinationAddressPrefix: '*'
+        }
+      }
+    ]
+  }
+}
+
+resource aksSecurityGroup 'Microsoft.Network/networkSecurityGroups@2022-05-01' = {
+  name: nsgAksName
+  location: location
+  properties: {
+    securityRules: [
+      {
+        name: 'default-allow-3389'
+        properties: {
+          priority: 200
+          access: 'Allow'
+          direction: 'Outbound'
+          destinationPortRange: '445'
+          protocol: '*'
+          sourcePortRange: '*'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: 'VirtualNetwork'
         }
       }
     ]
