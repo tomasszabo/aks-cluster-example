@@ -99,6 +99,18 @@ module influxDb 'influxdb.bicep' = {
   }
 }
 
+module jumphost 'jumphost.bicep' = {
+  name: 'jumphost'
+  params: {
+    location: location
+    prefix: prefix
+    publicIpId: network.outputs.jumphostIpAddressId
+    subnetId: network.outputs.subsnetVMId
+    storageAccountName: storage.outputs.storageAccountName
+    adminPassword: sqlAdminPassword
+  }
+}
+
 module privateEndpointsModule 'private-endpoints.bicep' = {
   name: 'privateEndpointsModule'
   params: {

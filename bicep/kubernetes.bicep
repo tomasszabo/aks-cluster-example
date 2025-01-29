@@ -37,6 +37,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-09-02-previ
         mode: 'System'
         osDiskType: 'Ephemeral'
         vnetSubnetID: aksCustomer1SubnetId
+        // availabilityZones: ['1', '2', '3']
       }
     ]
     kubernetesVersion: kubernetesVersion
@@ -69,7 +70,12 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-09-02-previ
       serviceCidr: serviceCidr
       dnsServiceIP: dnsServiceIP
       podCidr: podCidr
+      outboundType: 'userAssignedNATGateway'
     }
+    // apiServerAccessProfile: {
+    //   enablePrivateCluster: true
+    //   privateDNSZone: privateDnsZoneId
+    // }
   }
 }
 

@@ -58,6 +58,3 @@ resource privateDnsGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroup
     ]
   }
 }]
-
-
-
