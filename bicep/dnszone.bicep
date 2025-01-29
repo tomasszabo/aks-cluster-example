@@ -1,22 +1,23 @@
 
 param vnetId string
 
-resource gatewayDnsZone 'Microsoft.Network/privateDnsZones@2020-06-01' = {
+resource dnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
   name: 'private.metris.com'
   location: 'global'
-  properties: {}
+  properties: {
+  }
 }
 
-resource gatewayVnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  parent: gatewayDnsZone
-  name: 'gateway-vnet-dns-link'
+resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
+  parent: dnsZone
+  name: 'vnet-dns-link'
   location: 'global'
   properties: {
-    registrationEnabled: true
+    registrationEnabled: false
     virtualNetwork: {
       id: vnetId
     }
   }
 }
 
-output privateDnsZoneId string = gatewayDnsZone.id
+output privateDnsZoneId string = dnsZone.id

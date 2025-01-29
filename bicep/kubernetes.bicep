@@ -5,6 +5,7 @@ param aksCustomer1SubnetId string
 param registryName string
 param keyVaultName string
 param privateDnsZoneId string
+param vnetId string
 
 param clusterName string = '${prefix}-aks-${uniqueString(resourceGroup().id)}'
 param dnsPrefix string = prefix
@@ -44,9 +45,6 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-09-02-previ
       // Application routing add-on
       httpApplicationRouting: {
         enabled: true
-        config: {
-          zones: privateDnsZoneId
-        }
       }
 
       // Azure Key Vault add-on
@@ -57,6 +55,9 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-09-02-previ
     ingressProfile: {
       webAppRouting: {
         enabled: true
+        dnsZoneResourceIds: [
+          privateDnsZoneId
+        ]
         nginx: {
           defaultIngressControllerType: 'None'
         }
@@ -64,7 +65,7 @@ resource aksCluster 'Microsoft.ContainerService/managedClusters@2024-09-02-previ
     }
     networkProfile: {
       networkPlugin: 'azure'
-      loadBalancerSku: 'standard'
+      networkPluginMode: 'overlay'
       serviceCidr: serviceCidr
       dnsServiceIP: dnsServiceIP
       podCidr: podCidr
@@ -111,5 +112,37 @@ module secret1 'keyVaultSecret.bicep' = {
     keyVaultName: keyVaultName
     secretName: 'secret1'
     secretValue: 'this is a secret'
+  }
+}
+
+var dnsZoneContributorRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b12aa53e-6015-4669-85d0-8515ebb3ae7f')
+var routingIdentityId = aksCluster.properties.ingressProfile.webAppRouting.identity.objectId
+
+resource dnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' existing = {
+  name: last(split(privateDnsZoneId, '/'))
+}
+
+resource dnsRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(dnsZone.id, aksId, dnsZoneContributorRoleDefinitionId)
+  scope: dnsZone
+  properties: {
+    roleDefinitionId: dnsZoneContributorRoleDefinitionId
+    principalId: routingIdentityId
+  }
+}
+
+var networkContributorRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7')
+
+resource vnet 'Microsoft.Network/virtualNetworks@2023-02-01' existing = {
+  name: last(split(vnetId, '/'))
+}
+
+resource networkRoleAssignement 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(vnet.id, aksId, networkContributorRoleDefinitionId)
+  scope: vnet
+  properties: {
+    roleDefinitionId: networkContributorRoleDefinitionId
+    principalId: aksCluster.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }

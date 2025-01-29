@@ -7,13 +7,13 @@ resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
   name: registryName
   location: location
   sku: {
-    name: 'Basic'
+    name: 'Premium'
   }
   identity: {
     type: 'SystemAssigned'
   }
   properties: {
-    adminUserEnabled: true
+    adminUserEnabled: false
   }
 }
 

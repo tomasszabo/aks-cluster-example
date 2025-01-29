@@ -69,6 +69,7 @@ module kubernetes 'kubernetes.bicep' = {
     registryName: registry.outputs.registryName
     keyVaultName: keyVault.outputs.keyVaultName
     privateDnsZoneId: dnsZone.outputs.privateDnsZoneId
+    vnetId: network.outputs.vnetId
   }
 }
 
@@ -128,30 +129,30 @@ module privateEndpointsModule 'private-endpoints.bicep' = {
         groupIds: ['table']
         serviceId: storage.outputs.storageAccountId
       }
-      {
-        name: 'storage-blob'
-        dnsZoneName: 'privatelink.blob.${environment().suffixes.storage}'
-        groupIds: ['blob']
-        serviceId: storage.outputs.storageAccountCustomer1Id
-      }
-      {
-        name: 'storage-file'
-        dnsZoneName: 'privatelink.file.${environment().suffixes.storage}'
-        groupIds: ['file']
-        serviceId: storage.outputs.storageAccountCustomer1Id
-      }
-      {
-        name: 'storage-queue'
-        dnsZoneName: 'privatelink.queue.${environment().suffixes.storage}'
-        groupIds: ['queue']
-        serviceId: storage.outputs.storageAccountCustomer1Id
-      }
-      {
-        name: 'storage-table'
-        dnsZoneName: 'privatelink.table.${environment().suffixes.storage}'
-        groupIds: ['table']
-        serviceId: storage.outputs.storageAccountCustomer1Id
-      }
+      // {
+      //   name: 'customer1-storage-blob'
+      //   dnsZoneName: 'privatelink.blob.${environment().suffixes.storage}'
+      //   groupIds: ['blob']
+      //   serviceId: storage.outputs.storageAccountCustomer1Id
+      // }
+      // {
+      //   name: 'customer1-storage-file'
+      //   dnsZoneName: 'privatelink.file.${environment().suffixes.storage}'
+      //   groupIds: ['file']
+      //   serviceId: storage.outputs.storageAccountCustomer1Id
+      // }
+      // {
+      //   name: 'customer1-storage-queue'
+      //   dnsZoneName: 'privatelink.queue.${environment().suffixes.storage}'
+      //   groupIds: ['queue']
+      //   serviceId: storage.outputs.storageAccountCustomer1Id
+      // }
+      // {
+      //   name: 'customer1-storage-table'
+      //   dnsZoneName: 'privatelink.table.${environment().suffixes.storage}'
+      //   groupIds: ['table']
+      //   serviceId: storage.outputs.storageAccountCustomer1Id
+      // }
       {
         name: 'keyVault'
         dnsZoneName: 'privatelink.vaultcore.azure.net'

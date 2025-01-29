@@ -11,7 +11,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
   sku: {
     name: 'Standard_LRS'
   }
-  kind: 'Storage'
+  kind: 'StorageV2'
 }
 
 resource storageAccountCustomer1 'Microsoft.Storage/storageAccounts@2023-05-01' = {
