@@ -199,6 +199,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-02-01' = {
         name: subnetAksName
         properties: {
           addressPrefix: subnetAksPrefix
+          networkSecurityGroup: {
+            id: aksSecurityGroup.id
+          }
         }
       }
       {
