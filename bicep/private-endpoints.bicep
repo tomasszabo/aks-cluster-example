@@ -9,6 +9,7 @@ var suffix = uniqueString(resourceGroup().id)
 resource privateEndpoint 'Microsoft.Network/privateEndpoints@2023-04-01' = [for (endpoint, i) in endpoints: {
   name: '${prefix}-${endpoint.name}-pe-${suffix}'
   location: location
+  tags: endpoint.tags
   properties: {
     subnet: {
       id: subnetPrivateEndpointsId

@@ -82,6 +82,7 @@ module sqlServer 'sqlserver.bicep' = {
     publicIpId: network.outputs.mssqlIpAddressId
     subnetId: network.outputs.subsnetVMId
     storageAccountName: storage.outputs.storageAccountName
+    privateDnsZoneName: dnsZone.outputs.privateDnsZoneName
   }
 }
 
@@ -94,6 +95,7 @@ module influxDb 'influxdb.bicep' = {
     publicIpId: network.outputs.influxIpAddressId
     subnetId: network.outputs.subsnetVMId
     storageAccountName: storage.outputs.storageAccountName
+    privateDnsZoneName: dnsZone.outputs.privateDnsZoneName
   }
 }
 
@@ -110,60 +112,50 @@ module privateEndpointsModule 'private-endpoints.bicep' = {
         dnsZoneName: 'privatelink.blob.${environment().suffixes.storage}'
         groupIds: ['blob']
         serviceId: storage.outputs.storageAccountId
+        tags: {
+          customer: 'customer1'
+        }
       }
       {
         name: 'storage-file'
         dnsZoneName: 'privatelink.file.${environment().suffixes.storage}'
         groupIds: ['file']
         serviceId: storage.outputs.storageAccountId
+        tags: {
+          customer: 'customer1'
+        }
       }
       {
         name: 'storage-queue'
         dnsZoneName: 'privatelink.queue.${environment().suffixes.storage}'
         groupIds: ['queue']
         serviceId: storage.outputs.storageAccountId
+        tags: {
+          customer: 'customer1'
+        }
       }
       {
         name: 'storage-table'
         dnsZoneName: 'privatelink.table.${environment().suffixes.storage}'
         groupIds: ['table']
         serviceId: storage.outputs.storageAccountId
+        tags: {
+          customer: 'customer1'
+        }
       }
-      // {
-      //   name: 'customer1-storage-blob'
-      //   dnsZoneName: 'privatelink.blob.${environment().suffixes.storage}'
-      //   groupIds: ['blob']
-      //   serviceId: storage.outputs.storageAccountCustomer1Id
-      // }
-      // {
-      //   name: 'customer1-storage-file'
-      //   dnsZoneName: 'privatelink.file.${environment().suffixes.storage}'
-      //   groupIds: ['file']
-      //   serviceId: storage.outputs.storageAccountCustomer1Id
-      // }
-      // {
-      //   name: 'customer1-storage-queue'
-      //   dnsZoneName: 'privatelink.queue.${environment().suffixes.storage}'
-      //   groupIds: ['queue']
-      //   serviceId: storage.outputs.storageAccountCustomer1Id
-      // }
-      // {
-      //   name: 'customer1-storage-table'
-      //   dnsZoneName: 'privatelink.table.${environment().suffixes.storage}'
-      //   groupIds: ['table']
-      //   serviceId: storage.outputs.storageAccountCustomer1Id
-      // }
       {
         name: 'keyVault'
         dnsZoneName: 'privatelink.vaultcore.azure.net'
         groupIds: ['vault']
         serviceId: keyVault.outputs.keyVaultId
+        tags: {}
       }
       {
         name: 'acr'
         dnsZoneName: 'privatelink.azurecr.io'
         groupIds: ['registry']
         serviceId: registry.outputs.registryId
+        tags: {}
       }
     ]
   }

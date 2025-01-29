@@ -3,8 +3,8 @@ param location string
 param publicIpId string
 param subnetId string
 param storageAccountName string
+param privateDnsZoneName string
 
-@minLength(12)
 @secure()
 param adminPassword string
 
@@ -13,6 +13,7 @@ param osVersion string = '2022-datacenter-azure-edition'
 param vmSize string = 'Standard_B2as_v2'
 param vmName string = 'mssql'
 param sqlServerName string = '${prefix}-${vmName}-${uniqueString(resourceGroup().id)}'
+param premiumDiskName string = '${prefix}-${vmName}-data-${uniqueString(resourceGroup().id)}'
 param securityType string = 'TrustedLaunch'
 
 var nicName = '${prefix}-${vmName}-nic-${uniqueString(resourceGroup().id)}'
@@ -37,7 +38,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
       {
         name: 'ipconfig1'
         properties: {
-          privateIPAllocationMethod: 'Dynamic'
+          privateIPAllocationMethod: 'Dynamic' //maybe need to define it Static for proper DNS configuration
           publicIPAddress: {
             id: publicIpId
           }
@@ -52,6 +53,23 @@ resource nic 'Microsoft.Network/networkInterfaces@2022-05-01' = {
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
   name: storageAccountName
+}
+
+resource premiumDisk 'Microsoft.Compute/disks@2021-04-01' = {
+  name: premiumDiskName
+  location: location
+  tags: {
+    customer: 'customer1'
+  }
+  sku: {
+    name: 'Premium_LRS'
+  }
+  properties: {
+    creationData: {
+      createOption: 'Empty'
+    }
+    diskSizeGB: 128
+  }
 }
 
 resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
@@ -81,9 +99,12 @@ resource vm 'Microsoft.Compute/virtualMachines@2022-03-01' = {
       }
       dataDisks: [
         {
-          diskSizeGB: 1023
           lun: 0
-          createOption: 'Empty'
+          name: premiumDisk.name
+          createOption: 'Attach'
+          managedDisk: {
+            id: premiumDisk.id
+          }
         }
       ]
     }
@@ -125,3 +146,14 @@ resource vmExtension 'Microsoft.Compute/virtualMachines/extensions@2022-03-01' =
   }
 }
 
+resource dnsRecord 'Microsoft.Network/privateDnsZones/A@2024-06-01' = {
+  name: '${privateDnsZoneName}/${vmName}'
+  properties: {
+    ttl: 3600
+    aRecords: [
+      {
+        ipv4Address: nic.properties.ipConfigurations[0].properties.privateIPAddress
+      }
+    ]
+  }
+}

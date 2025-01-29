@@ -1,11 +1,11 @@
 
 param vnetId string
 
+param privateDnsZoneName string = 'private.metris.com'
+
 resource dnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
-  name: 'private.metris.com'
+  name: privateDnsZoneName
   location: 'global'
-  properties: {
-  }
 }
 
 resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
@@ -21,3 +21,4 @@ resource vnetLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06
 }
 
 output privateDnsZoneId string = dnsZone.id
+output privateDnsZoneName string = privateDnsZoneName
